@@ -20,6 +20,8 @@ struct ProblemState {
     int solve_time = 0;
     int total_incorrect = 0;
     bool frozen = false;
+    bool solved_before_freeze = false;
+    bool has_submission_before_freeze = false;
 };
 
 struct Team {
@@ -134,6 +136,11 @@ public:
 
         int prob_idx = getProblemIndex(problem);
         ProblemState& ps = team.problems[prob_idx];
+
+        if (!frozen) {
+            ps.has_submission_before_freeze = true;
+        }
+
         if (!ps.solved) {
             if (status == "Accepted") {
                 ps.solved = true;
@@ -176,8 +183,12 @@ public:
         for (auto& team : teams) {
             for (int i = 0; i < problem_count; i++) {
                 ProblemState& ps = team.problems[i];
-                if (!ps.solved && (ps.total_incorrect > 0 || ps.submissions_after_freeze > 0)) {
+                ps.frozen = false;
+                ps.submissions_after_freeze = 0;
+                if (!ps.solved && ps.has_submission_before_freeze) {
                     ps.frozen = true;
+                } else if (ps.solved) {
+                    ps.solved_before_freeze = true;
                 }
             }
         }
